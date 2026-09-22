@@ -1,120 +1,137 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"os/exec"
-	"runtime"
 	"strings"
-	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
-// Codes couleur ANSI pour l'ambiance Dark Fantasy & Restauration du monde
-const (
-	ColorReset   = "\033[0m"
-	ColorRed     = "\033[31m"      // Danger / Sang
-	ColorDkRed   = "\033[38;5;52m" // Rouge sombre / Oubli
-	ColorGray    = "\033[90m"      // Monde sans couleurs / Ombres
-	ColorGold    = "\033[38;5;136m"// Souvenir retrouvé / Ancien éclat
-	ColorCyan    = "\033[36m"      // Mystère
-	ColorBgDark  = "\033[40m"      // Fond noir terminal
-)
-
-// Structure représentant l'état du joueur et du monde
-type GameState struct {
-	PlayerName  string
-	Class       string
-	Memories    int
-	WorldColor  string
+type model struct {
+	cursor, width, height int
+	state                 string
 }
 
-func clearScreen() {
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", "cls")
+func (m model) Init() tea.Cmd { return nil }
+
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width, m.height = msg.Width, msg.Height
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "q":
+			if m.state == "menu" {
+				return m, tea.Quit
+			}
+			m.state = "menu"
+		case "up", "k":
+			if m.state == "menu" {
+				m.cursor = (m.cursor + 2) % 3
+			}
+		case "down", "j":
+			if m.state == "menu" {
+				m.cursor = (m.cursor + 1) % 3
+			}
+		case "enter":
+			if m.state == "menu" {
+				switch m.cursor {
+				case 0:
+					m.state = "game"
+				case 1:
+					m.state = "settings"
+				case 2:
+					return m, tea.Quit
+				}
+			} else {
+				m.state = "menu"
+			}
+		}
+	}
+	return m, nil
+}
+
+func (m model) View() string {
+	if m.width == 0 {
+		return ""
+	}
+
+	var lines []string
+	if m.state == "menu" {
+		// Titre avec des caractères standard (compatibles à 100% sur tous les terminaux)
+		lines = append(lines,
+			"\033[31m+-------------------------------------------+\033[0m",
+			"\033[31m|     ELDORIA — LES FRAGMENTS DU SOUVENIR     |\033[0m",
+			"\033[31m+-------------------------------------------+\033[0m",
+			"\033[90m\"Plus il retrouve ses souvenirs, plus le monde se colore...\"\033[0m",
+			"",
+			"",
+		)
+
+		// Les cases / boutons interactifs
+		opts := []string{"[  JOUER  ]", "[ PARAMÈTRES DE TOUCHES ]", "[   EXIT  ]"}
+		for i, o := range opts {
+			if m.cursor == i {
+				lines = append(lines, fmt.Sprintf("\033[41m\033[97m > %s < \033[0m", o))
+			} else {
+				lines = append(lines, fmt.Sprintf("\033[38;5;52m   %s   \033[0m", o))
+			}
+		}
+		lines = append(lines, "", "", "\033[90m[↑↓] Naviguer | [ENTRÉE] Valider | [q] Quitter\033[0m")
+	} else if m.state == "game" {
+		lines = []string{
+			"\033[31m=== EXPÉDITION ===\033[0m",
+			"Vous vous réveillez au cœur de la forêt d'Eldoria...",
+			"\033[38;5;136mAppuyez sur Entrée pour retourner au menu.\033[0m",
+		}
 	} else {
-		cmd = exec.Command("clear")
+		lines = []string{
+			"\033[31m=== PARAMÈTRES DE TOUCHES ===\033[0m",
+			"Navigation : [↑/↓] | Valider : [Entrée] | Quitter : [Q]",
+			"\033[38;5;136mAppuyez sur Entrée pour retourner au menu.\033[0m",
+		}
 	}
-	cmd.Stdout = os.Stdout
-	cmd.Run()
+
+	// Centrage vertical dynamique
+	topPad := (m.height - len(lines)) / 2
+	if topPad < 0 {
+		topPad = 0
+	}
+
+	var sb strings.Builder
+	sb.WriteString(strings.Repeat("\n", topPad))
+
+	// Centrage horizontal de chaque ligne
+	for _, line := range lines {
+		plainLen := stripAnsi(line)
+		leftPad := (m.width - plainLen) / 2
+		if leftPad < 0 {
+			leftPad = 0
+		}
+		sb.WriteString(strings.Repeat(" ", leftPad) + line + "\n")
+	}
+	return sb.String()
 }
 
-// Affiche du texte avec un effet de sténographie ténébreuse
-func printSlow(text string, delay time.Duration, color string) {
-	for _, char := range text {
-		fmt.Printf("%s%c%s", color, char, ColorReset)
-		time.Sleep(delay)
+func stripAnsi(s string) int {
+	inAnsi, length := false, 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\033' {
+			inAnsi = true
+			continue
+		}
+		if inAnsi {
+			if s[i] == 'm' {
+				inAnsi = false
+			}
+			continue
+		}
+		length++
 	}
-	fmt.Println()
-}
-
-func drawTitleScreen() {
-	clearScreen()
-	fmt.Println(ColorBgDark)
-	fmt.Println(ColorDkRed + "======================================================================" + ColorReset)
-	fmt.Println(ColorRed + " [TERMINAL v1.21] — PROJET: ELDORIA // STATUT: MONDE EN DÉPÉRISSEMENT  " + ColorReset)
-	fmt.Println(ColorDkRed + "======================================================================" + ColorReset)
-
-	fmt.Println("\n")
-	fmt.Println(ColorRed + "    ███████╗██╗     ██████╗  ██████╗ ██████╗ ██╗ █████╗              " + ColorReset)
-	fmt.Println(ColorRed + "    ██╔════╝██║     ██╔══██╗██╔═══██╗██╔══██╗██║██╔══██╗             " + ColorReset)
-	fmt.Println(ColorRed + "    █████╗  ██║     ██║  ██║██║   ██║██████╔╝██║███████║             " + ColorReset)
-	fmt.Println(ColorRed + "    ██╔══╝  ██║     ██║  ██║██║   ██║██╔══██╗██║██╔══██║             " + ColorReset)
-	fmt.Println(ColorRed + "    ███████╗███████╗██████╔╝╚██████╔╝██║  ██║██║██║  ██║             " + ColorReset)
-	fmt.Println(ColorRed + "    ╚══════╝╚══════╝╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝             " + ColorReset)
-	
-	fmt.Println("\n" + ColorGold + "         --- LES FRAGMENTS DU SOUVENIR ---         " + ColorReset)
-	fmt.Println(ColorGray + "     \"Plus il retrouve ses souvenirs, plus le monde se colore...\"" + ColorReset)
-	fmt.Println("\n")
+	return length
 }
 
 func main() {
-	reader := bufio.NewReader(os.Stdin)
-
-	drawTitleScreen()
-
-	printSlow("[SYSTÈME] Un jeune aventurier se réveille au milieu d'une forêt grise...", 20*time.Millisecond, ColorGray)
-	printSlow("[SYSTÈME] Ses mains sont vides. Son esprit est un abysse vide.", 20*time.Millisecond, ColorGray)
-	
-	fmt.Print("\n" + ColorGold + "Comment l'histoire doit-elle l'appeler ? (Votre nom) : " + ColorReset)
-	inputName, _ := reader.ReadString('\n')
-	playerName := strings.TrimSpace(inputName)
-	if playerName == "" {
-		playerName = "L'Etranger sans nom"
-	}
-
-	fmt.Print(ColorGold + "Choisissez votre classe (Ex: Chevalier Oublié, Mage de Cendre, Voleur d'Ombres) : " + ColorReset)
-	inputClass, _ := reader.ReadString('\n')
-	playerClass := strings.TrimSpace(inputClass)
-	if playerClass == "" {
-		playerClass = "Voyageur Amnésique"
-	}
-
-	state := GameState{
-		PlayerName: playerName,
-		Class:      playerClass,
-		Memories:   0,
-		WorldColor: "Gris Cendreux",
-	}
-
-	clearScreen()
-	drawTitleScreen()
-
-	printSlow(fmt.Sprintf("Bienvenue, %s (%s). Votre quête commence.", state.PlayerName, state.Class), 30*time.Millisecond, ColorRed)
-	printSlow("Vous croisez un vieil habitant au détour d'un sentier corrompu...", 30*time.Millisecond, ColorGray)
-	
-	fmt.Println("\n" + ColorCyan + "--- PREMIER DIALOGUE ---" + ColorReset)
-	fmt.Printf(ColorWhite + "Habitant : \"Ah, te voilà enfin de retour, %s... On commençait à craindre que tu n'oublies complètement ton propre chemin.\"\n" + ColorReset, state.PlayerName)
-	printSlow("[INDICATEUR] Un frisson glacé vous traverse. Comment cet inconnu connaît-il votre nom ?", 20*time.Millisecond, ColorDkRed)
-
-	fmt.Println("\n" + ColorGold + "=== MENU DU DESTIN TÉNÉBREUX ===" + ColorReset)
-	fmt.Println("1. Demander à l'habitant qui il est (Explorer)")
-	fmt.Println("2. Fouiller sa mémoire pour chercher un premier Fragment")
-	fmt.Println("3. Tourner le dos et fuir vers la forêt mourante")
-
-	fmt.Print("\n" + ColorGold + "Votre choix (1-3) : " + ColorReset)
-	_, _ = reader.ReadString('\n')
-
-	printSlow("\n[FIN DE LA SÉQUENCE D'INTRODUCTION - LE MONDE ATTEND VOS CHOIX...]", 25*time.Millisecond, ColorRed)
+	tea.NewProgram(model{}, tea.WithAltScreen()).Run()
 }
+
