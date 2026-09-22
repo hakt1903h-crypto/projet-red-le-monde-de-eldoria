@@ -1,6 +1,7 @@
 package entity
 
 import "fmt"
+import "eldoria/inventory"
 
 type Character struct {
 	Name  string
@@ -11,8 +12,9 @@ type Character struct {
 	MaxHP int
 	HP    int
 
-	Inventory []string
-	Gold      int
+	InventoryLimit int
+	Inventory      []string
+	Gold           int
 
 	Spells []string
 
@@ -29,21 +31,21 @@ type Character struct {
 
 func InitCharacter() Character {
 	return Character{
-		Level:      1,
-		HP:         100,
-		MaxHP:      100,
-		Mana:       50,
-		MaxMana:    50,
-		XP:         0,
-		MaxXP:      100,
-		Gold:       0,
-		Inventory:  []string{},
-		Spells:     []string{},
-		Equipment:  []string{},
-		Initiative: 10,
+		Level:          1,
+		HP:             100,
+		MaxHP:          100,
+		Mana:           50,
+		MaxMana:        50,
+		XP:             0,
+		MaxXP:          100,
+		Gold:           0,
+		InventoryLimit: 10,
+		Inventory:      []string{},
+		Spells:         []string{},
+		Equipment:      []string{},
+		Initiative:     10,
 	}
 }
-
 func CharacterCreation() Character {
 	character := InitCharacter()
 
@@ -81,7 +83,6 @@ func CharacterCreation() Character {
 
 	return character
 }
-
 func ApplyClass(character *Character, class string) {
 	switch class {
 	case "Guerrier":
@@ -106,3 +107,34 @@ func ApplyClass(character *Character, class string) {
 		character.Initiative = 15
 	}
 }
+
+func DisplayInfo(character Character) {
+	fmt.Println("════════════════════════════════")
+	fmt.Println("         PERSONNAGE")
+	fmt.Println("════════════════════════════════")
+
+	fmt.Println("Nom :", character.Name)
+	fmt.Println("Classe :", character.Class)
+	fmt.Println("Niveau :", character.Level)
+	fmt.Println()
+	fmt.Printf("PV : %d/%d\n", character.HP, character.MaxHP)
+	fmt.Printf("Mana : %d/%d\n", character.Mana, character.MaxMana)
+	fmt.Printf("XP : %d/%d\n", character.XP, character.MaxXP)
+	fmt.Println()
+	fmt.Println("Initiative :", character.Initiative)
+	fmt.Println("Argent :", character.Gold, "or")
+	fmt.Println("════════════════════════════════")
+}
+
+func AddInventory(inv *inventory.Inventory, item inventory.Item) bool {
+	if len(inv.Items) >= inventory.MaxInventorySize {
+		return false
+	}
+
+	inv.Items = append(inv.Items, item)
+	return true
+}
+
+func removeInventory() {}
+func hasItem()         {}
+func accessInventory() {}
