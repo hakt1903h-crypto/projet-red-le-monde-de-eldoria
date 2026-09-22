@@ -1,5 +1,11 @@
 package main
 
+import (
+	"eldoria/entity"
+	"fmt"
+)
+
 func main() {
-	print("hello world")
+	perso := entity.CharacterCreation()
+	fmt.Println(perso.Name, perso.Class, perso.HP)
 }
