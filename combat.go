@@ -7,11 +7,6 @@ import (
 	"strings"
 )
 
-// ==========================================
-// 👹 TÂCHE 19 : STRUCTURE MONSTRE ET GOBELIN
-// ==========================================
-
-// Monster représente un monstre ou le boss d'entraînement
 type Monster struct {
 	Name      string
 	MaxHP     int
@@ -19,133 +14,57 @@ type Monster struct {
 	Attack    int
 }
 
-// InitGoblin initialise les paramètres de base du gobelin d'entraînement (Tâche 19)
 func InitGoblin() Monster {
-	return Monster{
-		Name:      "Gobelin d'entrainement",
-		MaxHP:     40,
-		CurrentHP: 40,
-		Attack:    5,
-	}
+	return Monster{Name: "Gobelin d'entrainement", MaxHP: 40, CurrentHP: 40, Attack: 5}
 }
 
-// ==========================================
-// 🤖 TÂCHE 20 : PATTERN DE L'INTELLIGENCE ARTIFICIELLE
-// ==========================================
-
-// GoblinPattern gère le pattern d'attaque du gobelin selon le tour (Tâche 20)
-// Chaque tour, il inflige 100% de son attaque. Tous les 3 tours (3, 6, 9...), il inflige 200%.
-func GoblinPattern(m *Monster, c *Character, turnNumber int) {
-	damage := m.Attack
-	if turnNumber%3 == 0 {
-		damage = m.Attack * 2
+func GoblinPattern(m *Monster, c *Character, turn int) {
+	dmg := m.Attack
+	if turn%3 == 0 {
+		dmg *= 2 // Bonus tous les 3 tours
 	}
-
-	c.CurrentHP -= damage
+	c.CurrentHP -= dmg
 	if c.CurrentHP < 0 {
 		c.CurrentHP = 0
 	}
-
-	// Affichage exigé par le sujet
-	fmt.Printf("⚔️ %s inflige à %s %d de dégâts\n", m.Name, c.Name, damage)
-	fmt.Printf("   [%s] « PV : %d / %d »\n", c.Name, c.CurrentHP, c.MaxHP)
-
-	// Vérifier si le joueur est mort et le réanimer si besoin (Tâche 8)
+	fmt.Printf("⚔️ %s inflige %d dégâts à %s (PV : %d/%d)\n", m.Name, dmg, c.Name, c.CurrentHP, c.MaxHP)
 	CheckDeath(c)
 }
 
-// ==========================================
-// ⚔️ TÂCHE 21 : TOUR DU JOUEUR (ATTAQUE & INVENTAIRE)
-// ==========================================
-
-// CharacterTurn simule le tour de jeu du joueur
-func CharacterTurn(c *Character, m *Monster) bool {
+func TrainingFight(c *Character) {
+	goblin := InitGoblin()
 	reader := bufio.NewReader(os.Stdin)
+	turn := 1
 
-	for {
-		fmt.Println("\n--- VOS ACTIONS DE COMBAT ---")
-		fmt.Println("1. Attaquer (Attaque basique : -5 PV au monstre)")
-		fmt.Println("2. Inventaire (Utiliser une potion)")
-		fmt.Print("Votre choix : ")
-
+	fmt.Printf("\n--- COMBAT : %s VS %s ---\n", c.Name, goblin.Name)
+	for goblin.CurrentHP > 0 && c.CurrentHP > 0 {
+		fmt.Printf("\n[Tour %d] \n1. Attaquer (-5 PV)\n2. Boire Potion\nChoix : ", turn)
 		input, _ := reader.ReadString('\n')
 		input = strings.TrimSpace(input)
 
-		switch input {
-		case "1":
-			// Attaque basique : inflige 5 dégâts au monstre (Tâche 21)
-			damage := 5
-			m.CurrentHP -= damage
-			if m.CurrentHP < 0 {
-				m.CurrentHP = 0
+		if input == "1" {
+			goblin.CurrentHP -= 5
+			if goblin.CurrentHP < 0 {
+				goblin.CurrentHP = 0
 			}
-			fmt.Printf("✨ %s inflige %d dégâts à %s\n", c.Name, damage, m.Name)
-			fmt.Printf("   [%s] « PV : %d / %d »\n", m.Name, m.CurrentHP, m.MaxHP)
-			return true // Fin du tour du joueur, on passe au monstre
-
-		case "2":
-			// Utilisation d'un objet de l'inventaire en plein combat (Tâche 21 & 7)
-			if len(c.Inventory) == 0 {
-				fmt.Println("❌ Votre inventaire est vide !")
-				continue
-			}
-
-			fmt.Println("\n--- INVENTAIRE DE COMBAT ---")
-			for i, item := range c.Inventory {
-				fmt.Printf("%d. %s (%s)\n", i+1, item.Name, item.Description)
-			}
-			fmt.Println("0. Retour")
-			fmt.Print("Choisissez un objet à utiliser : ")
-
-			// On utilise ta fonction de soin ou de poison selon ce que le joueur possède
-			// Pour simplifier, on applique une potion de vie si disponible :
+			fmt.Printf("✨ Vous infligez 5 dégâts (%s PV : %d/%d)\n", goblin.Name, goblin.CurrentHP, goblin.MaxHP)
+		} else if input == "2" {
 			UseHealthPotion(c)
-			return true // Après l'objet, c'est au tour du monstre
-
-		default:
-			fmt.Println("❌ Choix invalide, veuillez entrer 1 ou 2.")
-		}
-	}
-}
-
-// ==========================================
-// 🏟️ TÂCHE 22 : BOUCLE GLOBALE DU COMBAT
-// ==========================================
-
-// TrainingFight lance le combat d'entraînement tour par tour (Tâche 22)
-func TrainingFight(c *Character) {
-	goblin := InitGoblin()
-	turnNumber := 1
-
-	fmt.Println("\n╔══════════════════════════════════════════════════╗")
-	fmt.Println("║           DÉBUT DU COMBAT D'ENTRAÎNEMENT         ║")
-	fmt.Printf("║     %s (PV: %d) VS %s (PV: %d)     ║\n", c.Name, c.CurrentHP, goblin.Name, goblin.CurrentHP)
-	fmt.Println("╚══════════════════════════════════════════════════╝")
-
-	for {
-		fmt.Printf("\n================ TOUR DE COMBAT N°%d ===============-\n", turnNumber)
-
-		// 1. Tour du joueur (Attaque ou Potion)
-		if !CharacterTurn(c, &goblin) {
+		} else {
 			continue
 		}
 
-		// Vérifier si le monstre est mort
 		if goblin.CurrentHP <= 0 {
-			fmt.Printf("\n🎉 Victoire ! %s a été vaincu par %s !\n", goblin.Name, c.Name)
-			AddMoney(c, 25) // Petite récompense en or pour la victoire
+			fmt.Println("🎉 Victoire ! Monstre vaincu.")
+			AddMoney(c, 25)
 			break
 		}
 
-		// 2. Tour du monstre (Pattern du Gobelin)
-		GoblinPattern(&goblin, c, turnNumber)
-
-		// Vérifier si le joueur a perdu tous ses PV
+		GoblinPattern(&goblin, c, turn)
 		if c.CurrentHP <= 0 {
-			fmt.Printf("\n💀 Vous avez perdu le combat face à %s...\n", goblin.Name)
+			fmt.Println("💀 Vous avez perdu le combat...")
 			break
 		}
-
-		turnNumber++
+		turn++
 	}
 }
