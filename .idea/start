@@ -1,0 +1,120 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"os/exec"
+	"runtime"
+	"strings"
+	"time"
+)
+
+// Codes couleur ANSI pour l'ambiance Dark Fantasy & Restauration du monde
+const (
+	ColorReset   = "\033[0m"
+	ColorRed     = "\033[31m"      // Danger / Sang
+	ColorDkRed   = "\033[38;5;52m" // Rouge sombre / Oubli
+	ColorGray    = "\033[90m"      // Monde sans couleurs / Ombres
+	ColorGold    = "\033[38;5;136m"// Souvenir retrouvé / Ancien éclat
+	ColorCyan    = "\033[36m"      // Mystère
+	ColorBgDark  = "\033[40m"      // Fond noir terminal
+)
+
+// Structure représentant l'état du joueur et du monde
+type GameState struct {
+	PlayerName  string
+	Class       string
+	Memories    int
+	WorldColor  string
+}
+
+func clearScreen() {
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/c", "cls")
+	} else {
+		cmd = exec.Command("clear")
+	}
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+}
+
+// Affiche du texte avec un effet de sténographie ténébreuse
+func printSlow(text string, delay time.Duration, color string) {
+	for _, char := range text {
+		fmt.Printf("%s%c%s", color, char, ColorReset)
+		time.Sleep(delay)
+	}
+	fmt.Println()
+}
+
+func drawTitleScreen() {
+	clearScreen()
+	fmt.Println(ColorBgDark)
+	fmt.Println(ColorDkRed + "======================================================================" + ColorReset)
+	fmt.Println(ColorRed + " [TERMINAL v1.21] — PROJET: ELDORIA // STATUT: MONDE EN DÉPÉRISSEMENT  " + ColorReset)
+	fmt.Println(ColorDkRed + "======================================================================" + ColorReset)
+
+	fmt.Println("\n")
+	fmt.Println(ColorRed + "    ███████╗██╗     ██████╗  ██████╗ ██████╗ ██╗ █████╗              " + ColorReset)
+	fmt.Println(ColorRed + "    ██╔════╝██║     ██╔══██╗██╔═══██╗██╔══██╗██║██╔══██╗             " + ColorReset)
+	fmt.Println(ColorRed + "    █████╗  ██║     ██║  ██║██║   ██║██████╔╝██║███████║             " + ColorReset)
+	fmt.Println(ColorRed + "    ██╔══╝  ██║     ██║  ██║██║   ██║██╔══██╗██║██╔══██║             " + ColorReset)
+	fmt.Println(ColorRed + "    ███████╗███████╗██████╔╝╚██████╔╝██║  ██║██║██║  ██║             " + ColorReset)
+	fmt.Println(ColorRed + "    ╚══════╝╚══════╝╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝             " + ColorReset)
+	
+	fmt.Println("\n" + ColorGold + "         --- LES FRAGMENTS DU SOUVENIR ---         " + ColorReset)
+	fmt.Println(ColorGray + "     \"Plus il retrouve ses souvenirs, plus le monde se colore...\"" + ColorReset)
+	fmt.Println("\n")
+}
+
+func main() {
+	reader := bufio.NewReader(os.Stdin)
+
+	drawTitleScreen()
+
+	printSlow("[SYSTÈME] Un jeune aventurier se réveille au milieu d'une forêt grise...", 20*time.Millisecond, ColorGray)
+	printSlow("[SYSTÈME] Ses mains sont vides. Son esprit est un abysse vide.", 20*time.Millisecond, ColorGray)
+	
+	fmt.Print("\n" + ColorGold + "Comment l'histoire doit-elle l'appeler ? (Votre nom) : " + ColorReset)
+	inputName, _ := reader.ReadString('\n')
+	playerName := strings.TrimSpace(inputName)
+	if playerName == "" {
+		playerName = "L'Etranger sans nom"
+	}
+
+	fmt.Print(ColorGold + "Choisissez votre classe (Ex: Chevalier Oublié, Mage de Cendre, Voleur d'Ombres) : " + ColorReset)
+	inputClass, _ := reader.ReadString('\n')
+	playerClass := strings.TrimSpace(inputClass)
+	if playerClass == "" {
+		playerClass = "Voyageur Amnésique"
+	}
+
+	state := GameState{
+		PlayerName: playerName,
+		Class:      playerClass,
+		Memories:   0,
+		WorldColor: "Gris Cendreux",
+	}
+
+	clearScreen()
+	drawTitleScreen()
+
+	printSlow(fmt.Sprintf("Bienvenue, %s (%s). Votre quête commence.", state.PlayerName, state.Class), 30*time.Millisecond, ColorRed)
+	printSlow("Vous croisez un vieil habitant au détour d'un sentier corrompu...", 30*time.Millisecond, ColorGray)
+	
+	fmt.Println("\n" + ColorCyan + "--- PREMIER DIALOGUE ---" + ColorReset)
+	fmt.Printf(ColorWhite + "Habitant : \"Ah, te voilà enfin de retour, %s... On commençait à craindre que tu n'oublies complètement ton propre chemin.\"\n" + ColorReset, state.PlayerName)
+	printSlow("[INDICATEUR] Un frisson glacé vous traverse. Comment cet inconnu connaît-il votre nom ?", 20*time.Millisecond, ColorDkRed)
+
+	fmt.Println("\n" + ColorGold + "=== MENU DU DESTIN TÉNÉBREUX ===" + ColorReset)
+	fmt.Println("1. Demander à l'habitant qui il est (Explorer)")
+	fmt.Println("2. Fouiller sa mémoire pour chercher un premier Fragment")
+	fmt.Println("3. Tourner le dos et fuir vers la forêt mourante")
+
+	fmt.Print("\n" + ColorGold + "Votre choix (1-3) : " + ColorReset)
+	_, _ = reader.ReadString('\n')
+
+	printSlow("\n[FIN DE LA SÉQUENCE D'INTRODUCTION - LE MONDE ATTEND VOS CHOIX...]", 25*time.Millisecond, ColorRed)
+}
