@@ -1,7 +1,6 @@
 package entity
 
 import "fmt"
-import "eldoria/inventory"
 
 type Character struct {
 	Name  string
@@ -12,9 +11,8 @@ type Character struct {
 	MaxHP int
 	HP    int
 
-	InventoryLimit int
-	Inventory      []string
-	Gold           int
+	Inventory []string
+	Gold      int
 
 	Spells []string
 
@@ -31,19 +29,18 @@ type Character struct {
 
 func InitCharacter() Character {
 	return Character{
-		Level:          1,
-		HP:             100,
-		MaxHP:          100,
-		Mana:           50,
-		MaxMana:        50,
-		XP:             0,
-		MaxXP:          100,
-		Gold:           0,
-		InventoryLimit: 10,
-		Inventory:      []string{},
-		Spells:         []string{},
-		Equipment:      []string{},
-		Initiative:     10,
+		Level:      1,
+		HP:         100,
+		MaxHP:      100,
+		Mana:       50,
+		MaxMana:    50,
+		XP:         0,
+		MaxXP:      100,
+		Gold:       0,
+		Inventory:  []string{},
+		Spells:     []string{},
+		Equipment:  []string{},
+		Initiative: 10,
 	}
 }
 func CharacterCreation() Character {
@@ -125,16 +122,3 @@ func DisplayInfo(character Character) {
 	fmt.Println("Argent :", character.Gold, "or")
 	fmt.Println("════════════════════════════════")
 }
-
-func AddInventory(inv *inventory.Inventory, item inventory.Item) bool {
-	if len(inv.Items) >= inventory.MaxInventorySize {
-		return false
-	}
-
-	inv.Items = append(inv.Items, item)
-	return true
-}
-
-func removeInventory() {}
-func hasItem()         {}
-func accessInventory() {}
