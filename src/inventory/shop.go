@@ -11,13 +11,14 @@ type Shop struct {
 func InitShop() Shop {
 	return Shop{
 		Items: []Item{
-			{Name: "Potion de vie", Price: 3},
-			{Name: "Potion de poison", Price: 6},
-			{Name: "Livre de sort", Price: 25},
-			{Name: "Fourrure de loup", Price: 4},
-			{Name: "Peau de Troll", Price: 7},
-			{Name: "Cuir de sanglier", Price: 3},
-			{Name: "Plume de corbeau", Price: 1},
+			{Name: ItemHealthPotion, Price: 3, Type: TypeConsumable},
+			{Name: ItemPoisonPotion, Price: 6, Type: TypeConsumable},
+			{Name: ItemSpellbook, Price: 25, Type: TypeSpellbook},
+			{Name: ItemWolfFur, Price: 4, Type: TypeResource},
+			{Name: ItemTrollHide, Price: 7, Type: TypeResource},
+			{Name: ItemBoarLeather, Price: 3, Type: TypeResource},
+			{Name: ItemCrowFeather, Price: 1, Type: TypeResource},
+			{Name: ItemInventoryUpgrade, Price: InventoryUpgradeCost, Type: TypeUpgrade},
 		},
 	}
 }
@@ -32,12 +33,14 @@ func AccessShop(shop Shop) {
 	}
 }
 
+// BuyItem achète un objet standard : vérifie l'or ET la place disponible.
+// L'amélioration d'inventaire est un achat spécial géré par UpgradeInventory.
 func BuyItem(inv *Inventory, gold *int, item Item) bool {
 	if *gold < item.Price {
 		return false
 	}
 
-	if len(inv.Items) >= MaxInventorySize {
+	if inv.IsFull() {
 		return false
 	}
 

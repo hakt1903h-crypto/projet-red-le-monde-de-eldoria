@@ -1,6 +1,10 @@
-package entity
+package player
 
-import "fmt"
+import (
+	"eldoria/combat/spells"
+	"eldoria/inventory"
+	"fmt"
+)
 
 type Character struct {
 	Name  string
@@ -11,10 +15,11 @@ type Character struct {
 	MaxHP int
 	HP    int
 
-	Inventory []string
+	Inventory inventory.Inventory
 	Gold      int
 
-	Spells []string
+	Spells []spells.Spell
+	Attack int
 
 	Mana    int
 	MaxMana int
@@ -24,22 +29,23 @@ type Character struct {
 
 	Initiative int
 
-	Equipment []string
+	Equipment map[string]string // slot -> nom de l'équipement porté
 }
 
 func InitCharacter() Character {
 	return Character{
 		Level:      1,
-		HP:         100,
+		HP:         50,
 		MaxHP:      100,
 		Mana:       50,
 		MaxMana:    50,
 		XP:         0,
 		MaxXP:      100,
-		Gold:       0,
-		Inventory:  []string{},
-		Spells:     []string{},
-		Equipment:  []string{},
+		Gold:       100,
+		Attack:     5,
+		Inventory:  inventory.Inventory{},
+		Spells:     []spells.Spell{},
+		Equipment:  map[string]string{},
 		Initiative: 10,
 	}
 }
@@ -84,25 +90,31 @@ func ApplyClass(character *Character, class string) {
 	switch class {
 	case "Guerrier":
 		character.MaxHP = 120
-		character.HP = 120
 		character.MaxMana = 30
 		character.Mana = 30
 		character.Initiative = 8
+		character.Attack = 10
+		character.Spells = []spells.Spell{spells.Punch}
 
 	case "Mage":
 		character.MaxHP = 80
-		character.HP = 80
 		character.MaxMana = 100
 		character.Mana = 100
 		character.Initiative = 10
+		character.Attack = 5
+		character.Spells = []spells.Spell{spells.Punch, spells.Fireball}
 
 	case "Voleur":
 		character.MaxHP = 90
-		character.HP = 90
 		character.MaxMana = 50
 		character.Mana = 50
 		character.Initiative = 15
+		character.Attack = 8
+		character.Spells = []spells.Spell{spells.Punch}
 	}
+
+	// PV de départ : 50 % des PV maximum (consigne du sujet)
+	character.HP = character.MaxHP / 2
 }
 
 func DisplayInfo(character Character) {
@@ -119,6 +131,36 @@ func DisplayInfo(character Character) {
 	fmt.Printf("XP : %d/%d\n", character.XP, character.MaxXP)
 	fmt.Println()
 	fmt.Println("Initiative :", character.Initiative)
+	fmt.Println("Attaque :", character.Attack)
 	fmt.Println("Argent :", character.Gold, "or")
+
+	fmt.Print("Sorts : ")
+	if len(character.Spells) == 0 {
+		fmt.Println("aucun")
+	} else {
+		for i, s := range character.Spells {
+			if i > 0 {
+				fmt.Print(", ")
+			}
+			fmt.Print(s.Name)
+		}
+		fmt.Println()
+	}
+
+	fmt.Print("Équipement : ")
+	if len(character.Equipment) == 0 {
+		fmt.Println("aucun")
+	} else {
+		first := true
+		for slot, name := range character.Equipment {
+			if !first {
+				fmt.Print(", ")
+			}
+			fmt.Printf("%s (%s)", name, slot)
+			first = false
+		}
+		fmt.Println()
+	}
+
 	fmt.Println("════════════════════════════════")
 }
