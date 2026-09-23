@@ -1,23 +1,35 @@
 package main
 
 import (
-	"eldoria/inventory"
-	"eldoria/player"
+	"eldoria/interne/models"
 	"fmt"
 )
 
 func main() {
-	perso := player.CharacterCreation()
-	player.DisplayInfo(perso)
-	marchand := inventory.InitShop()
-	inventory.AccessShop(marchand)
-	popo := inventory.Item{Name: "Potion de vie", Price: 3}
-	fmt.Println(perso.Inventory.Items)
-	perso.Gold = 50
-	if inventory.BuyItem(&perso.Inventory, &perso.Gold, popo) {
-		fmt.Println(perso.Inventory.Items)
-	} else {
-		fmt.Println("Pas assez de tal")
+	player := models.Character{
+		Name:      "Lucas",
+		Class:     "Humain",
+		Level:     1,
+		MaxHP:     models.HumanMaxHP,
+		CurrentHP: models.HumanMaxHP / 2,
+		Money:     models.StartingGold,
 	}
-	player.DisplayInfo(perso)
+
+	game := models.GameState{
+		Player:         player,
+		CurrentZone:    "Forêt Oubliée",
+		CurrentScene:   "INTRO",
+		StoryProgress:  "INTRO",
+		IsGameFinished: false,
+	}
+
+	fmt.Println("ELDORIA")
+	fmt.Println("Les Fragments du Souvenir")
+	fmt.Println()
+
+	fmt.Println("Joueur :", game.Player.Name)
+	fmt.Println("Classe :", game.Player.Class)
+	fmt.Println("PV :", game.Player.CurrentHP, "/", game.Player.MaxHP)
+	fmt.Println("Or :", game.Player.Money)
+	fmt.Println("Zone :", game.CurrentZone)
 }
