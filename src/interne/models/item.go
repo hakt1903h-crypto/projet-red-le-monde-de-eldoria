@@ -12,8 +12,11 @@ const (
 )
 
 type Item struct {
-	Name   string
-	Type   ItemType
-	Price  int
-	Effect int
+	Name    string
+	Type    ItemType
+	Price   int
+	Effect  int
+	Spell   *Spell
+	Slot    string
+	HPBonus int
 }
